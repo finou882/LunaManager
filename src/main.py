@@ -460,7 +460,7 @@ def Login(page: ft.Page):
                                 content=ft.Column(
                                     [
                                         ft.Image(
-                                            src="images/logos/50px_white.png",
+                                            src="assets/50px_white.png",
                                             width=150,
                                             height=150,
                                             fit=ft.ImageFit.CONTAIN,
