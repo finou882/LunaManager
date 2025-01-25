@@ -2,7 +2,7 @@ import flet as ft
 import random
 import datetime
 import calendar
-from flet import Container, ElevatedButton, Page
+from flet import Container, ElevatedButton, Page, LoginEvent
 from flet.auth.providers.google_oauth_provider import GoogleOAuthProvider
 import os
 from dotenv import load_dotenv
@@ -272,7 +272,7 @@ def Home(page: ft.Page):
         bgcolor=ft.Colors.BLACK54,
         leading=ft.Container(
             content=ft.Image(
-                src="images/logos/50px_white.png",
+                src="./assets/50px_white.png",
                 width=50,
                 height=50,
                 fit=ft.ImageFit.CONTAIN,
@@ -416,35 +416,30 @@ def Login(page: ft.Page):
         redirect_url=RedirectUrl
     )
 
-    # ログイン処理
-    def login_google(e):
-        page.login(provider)
+    def login_button_click(e):
+        page.go("/home")  # Immediately redirect to /home
 
-    # ログアウト処理
-    def logout_google(e):
+    def on_login(e: LoginEvent):
+        if not e.error:
+            print("Login successful!")
+            print("Email:", page.auth.user.get("email", "No email found"))
+            toggle_login_buttons()
+
+    def logout_button_click(e):
         page.logout()
 
-    # ログインボタン
-    login_button = Container(
-        content=ElevatedButton(
-            "Sign in with Google", bgcolor=ft.Colors.LIGHT_BLUE_500, color=ft.Colors.WHITE, on_click=login_google,
-        ),
-        margin=ft.margin.only(right=10)
-    )
-
-    # ログアウトボタン
-    logout_button = Container(
-        content=ElevatedButton(
-            "Sign out Google", bgcolor=ft.Colors.RED_300, color=ft.Colors.WHITE, on_click=logout_google),
-        margin=ft.margin.only(right=10)
-    )
-
-    def on_login(e):
-        print(page.auth.user['name'], page.auth.user['email'])
-        page.go("/home")
-
     def on_logout(e):
-        page.go("/logout")
+        print("Logged out.")
+        toggle_login_buttons()
+
+    def toggle_login_buttons():
+        login_button.visible = page.auth is None
+        logout_button.visible = page.auth is not None
+        page.update()
+
+    login_button = ElevatedButton("Login with Google", on_click=login_button_click)
+    logout_button = ElevatedButton("Logout", on_click=logout_button_click)
+    toggle_login_buttons()
 
     page.on_login = on_login
     page.on_logout = on_logout
@@ -460,7 +455,7 @@ def Login(page: ft.Page):
                                 content=ft.Column(
                                     [
                                         ft.Image(
-                                            src="assets/50px_white.png",
+                                            src=r"C:\Users\finou\Documents\Projects\Projects2\LinK\src\assets\50px_white.png",
                                             width=150,
                                             height=150,
                                             fit=ft.ImageFit.CONTAIN,
