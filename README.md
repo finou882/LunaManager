@@ -15,4 +15,4 @@
 開発状況は<a href="https://puddle-asteroid-312.notion.site/18531294550c8080a9bacb320ba79511?v=18531294550c81f6853d000cdd96a71f&pvs=74">Notion</a>で。
 
 [![Open in Visual Studio Code](https://img.shields.io/static/v1?logo=visualstudiocode&label=&message=Open%20in%20Visual%20Studio%20Code&labelColor=2c2c32&color=007acc&logoColor=007acc)](https://open.vscode.dev/finou882/LinK)
-<h2>use tech</h2>
+
