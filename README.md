@@ -1,6 +1,6 @@
 
 <div style="text-align: center;">
-<img src="https://github.com/user-attachments/assets/a0265d36-ee41-4cd6-8229-a9f7997c2968" width=50%>
+<img src="./src/assets/githubicon.png" width=50%>
 
 <h2>LinK</h2>
 
