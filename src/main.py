@@ -257,7 +257,7 @@ def Home(page: ft.Page):
         if selected_index == 0:
             page.go("/home")
         elif selected_index == 1:
-            page.go("/Settings")
+            page.go("/settings")
         elif selected_index == 2:
             page.go("/community")
         elif selected_index == 3:
