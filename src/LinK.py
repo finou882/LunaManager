@@ -1,3 +1,19 @@
+# ---
+# jupyter:
+#   jupytext:
+#     formats: ipynb,py:light
+#     text_representation:
+#       extension: .py
+#       format_name: light
+#       format_version: '1.5'
+#       jupytext_version: 1.16.6
+#   kernelspec:
+#     display_name: Python [conda env:base] *
+#     language: python
+#     name: conda-base-py
+# ---
+
+# +
 import flet as ft
 import random
 import datetime
@@ -8,6 +24,8 @@ import os
 from dotenv import load_dotenv
 from google_auth_oauthlib.flow import InstalledAppFlow
 import webbrowser
+import nest_asyncio
+import asyncio
 
 load_dotenv()
 
@@ -105,7 +123,7 @@ def view_waseque_details(page: ft.Page, waseque):
         ],
     )
 
-def Settings(page: ft.Page):
+def settings(page: ft.Page):
     page.title = "LinK"
 
     def toggle_theme(e):
@@ -114,9 +132,6 @@ def Settings(page: ft.Page):
         else:
             page.theme_mode = ft.ThemeMode.LIGHT
         page.update()
-
-    def open_link(e):
-        webbrowser.open("https://ja.pngtree.com/freepng/a-modern-stylized-fox-with-sharp-geometric-lines-and-bold-head-shape_19753618.html")
 
     rail = create_navigation_rail(page, selected_index=1)  # Settingsページのインデックスを選択
 
@@ -140,15 +155,7 @@ def Settings(page: ft.Page):
                                         ),
                                     ],
                                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                ),
-                                ft.GestureDetector(
-                                    on_tap=open_link,
-                                    child=ft.Text(
-                                        "からの PNG 画像 ja.pngtree.com",
-                                        color=ft.Colors.BLUE,
-                                        style=ft.TextStyle(decoration=ft.TextDecoration.UNDERLINE)
-                                    ),
-                                ),
+                                )
                             ],
                             spacing=20,
                         ),
@@ -228,8 +235,8 @@ def main(page: ft.Page):
             page.views.append(Login(page))
         elif troute.match("/home"):
             page.views.append(Home(page))
-        elif troute.match("/Settings"):
-            page.views.append(Settings(page))
+        elif troute.match("/settings"):
+            page.views.append(settings(page))
         elif troute.match("/waseque/:number"):
             number = route.route.split("/")[-1]
             waseque = next((w for w in sample_waseques if w.number == number), None)
@@ -492,4 +499,10 @@ def Login(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.app(target=main, port=8000, view=ft.AppView.WEB_BROWSER)
+    # asyncio.run()の代わりに、直接イベントループを取得して実行
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(ft.app(target=main, port=8000, view=ft.AppView.WEB_BROWSER))
+
+# -
+
+
