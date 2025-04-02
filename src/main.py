@@ -1,6 +1,12 @@
 import flet as ft
 import json
 from urllib import request, error
+import os
+from flet.auth.providers import Auth0OAuthProvider
+from dotenv import load_dotenv
+
+# .envファイルから環境変数を読み込み
+load_dotenv()
 
 def get_classes():
     try:
@@ -21,6 +27,101 @@ def get_class_detail(class_id):
 
 def main(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+
+    # Auth0プロバイダーの設定
+    provider = Auth0OAuthProvider(
+        client_id=os.getenv("AUTH0_CLIENT_ID"),
+        client_secret=os.getenv("AUTH0_CLIENT_SECRET"),
+        domain=os.getenv("AUTH0_DOMAIN"),
+        redirect_url="http://localhost:3000/oauth_callback",
+    )
+
+    def login_button_click(e):
+        page.login(provider)
+
+    def on_login(e):
+        if not e.error:
+            toggle_auth_buttons()
+            # ログイン成功時にユーザー情報を表示
+            print("User ID:", page.auth.user.id)
+            print("Access token:", page.auth.token.access_token)
+            # トークンを保存
+            page.client_storage.set("auth_token", page.auth.token.to_json())
+            page.go("/")
+        else:
+            print("Login error:", e.error)
+
+    def logout_button_click(e):
+        page.client_storage.remove("auth_token")
+        page.logout()
+        page.go("/")
+
+    def on_logout(e):
+        toggle_auth_buttons()
+
+    def toggle_auth_buttons():
+        auth_buttons.controls[0].visible = page.auth is None  # login button
+        auth_buttons.controls[1].visible = page.auth is not None  # logout button
+        page.update()
+
+    # 認証ボタンのコンテナ
+    auth_buttons = ft.Row(
+        controls=[
+            ft.ElevatedButton(
+                "Sign in",
+                icon=ft.icons.LOGIN,
+                on_click=login_button_click,
+            ),
+            ft.ElevatedButton(
+                "Sign out",
+                icon=ft.icons.LOGOUT,
+                on_click=logout_button_click,
+                visible=False,
+            ),
+        ],
+        spacing=10,
+    )
+
+    def create_appbar():
+        return ft.AppBar(
+            leading=ft.IconButton(
+                icon=ft.Icons.MENU,
+                on_click=Nbar_clicked
+            ),
+        leading_width=40,
+            title=ft.Text("Luna Manager"),
+        center_title=False,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
+        actions=[
+                *auth_buttons.controls,  # 認証ボタンを展開
+            ft.IconButton(ft.Icons.WB_SUNNY_OUTLINED),
+                ft.IconButton(ft.Icons.FILTER_3, on_click=Nbar_clicked),
+            ft.PopupMenuButton(
+                items=[
+                    ft.PopupMenuItem(text="Item 1"),
+                        ft.PopupMenuItem(),
+                    ft.PopupMenuItem(
+                            text="Checked item", 
+                            checked=False, 
+                            on_click=check_item_clicked
+                    ),
+                ]
+            ),
+        ],
+    )
+
+    # ログインイベントハンドラの設定
+    page.on_login = on_login
+    page.on_logout = on_logout
+
+    # 保存されたトークンでの自動ログイン
+    saved_token = page.client_storage.get("auth_token")
+    if saved_token:
+        try:
+            page.login(provider, saved_token=saved_token)
+        except Exception as e:
+            print(f"Auto login failed: {e}")
+            page.client_storage.remove("auth_token")
 
     def home_page():
         classes = get_classes()
@@ -95,19 +196,38 @@ def main(page: ft.Page):
         )
 
     def search_page():
+        def perform_search(e):
+            query = search_field.value.strip()
+            if query:
+                # クエリがある場合、クラス名に基づいてフィルタリング
+                filtered_classes = [class_data for class_data in get_classes() if query.lower() in class_data['name'].lower()]
+            else:
+                # クエリが空の場合、すべてのクラスをID順で取得
+                filtered_classes = get_classes()
+
+            # 検索結果を表示
+            search_results.controls.clear()
+            for class_data in filtered_classes:
+                search_results.controls.append(
+                    ft.ListTile(
+                        leading=ft.Icon(ft.Icons.SCHOOL),
+                        title=ft.Text(f"{class_data['name'] or 'No name'}"),
+                        subtitle=ft.Text(
+                            f"Teacher: {class_data['teacher']} | Instructor: {class_data['instructor']}"
+                        ),
+                        on_click=lambda e, id=class_data['id']: e.page.go(f"/class/{id}")
+                    )
+                )
+            search_results.update()
+
+        search_field = ft.TextField(label="Search...", prefix_icon=ft.Icons.SEARCH, on_change=perform_search)
+        search_results = ft.ListView(height=200)
+
         return ft.Column(
             controls=[
                 ft.Text("Search Page", size=30, weight=ft.FontWeight.BOLD),
-                ft.TextField(label="Search...", prefix_icon=ft.Icons.SEARCH),
-                ft.ListView(
-                    controls=[
-                        ft.ListTile(
-                            leading=ft.Icon(ft.Icons.ARTICLE),
-                            title=ft.Text(f"Search Result {i}")
-                        ) for i in range(1, 5)
-                    ],
-                    height=200,
-                )
+                search_field,
+                search_results,
             ]
         )
 
@@ -195,33 +315,6 @@ def main(page: ft.Page):
     # ドロワーをページに追加
     page.drawer = drawer
     
-    def create_appbar():
-        return ft.AppBar(
-            leading=ft.IconButton(
-                icon=ft.Icons.MENU,
-                on_click=Nbar_clicked
-            ),
-            leading_width=40,
-            title=ft.Text("Luna Manager"),
-            center_title=False,
-            bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
-            actions=[
-                ft.IconButton(ft.Icons.WB_SUNNY_OUTLINED),
-                ft.IconButton(ft.Icons.FILTER_3, on_click=Nbar_clicked),
-                ft.PopupMenuButton(
-                    items=[
-                        ft.PopupMenuItem(text="Item 1"),
-                        ft.PopupMenuItem(),
-                        ft.PopupMenuItem(
-                            text="Checked item", 
-                            checked=False, 
-                            on_click=check_item_clicked
-                        ),
-                    ]
-                ),
-            ],
-        )
-    
     def route_change(route):
         page.views.clear()
         
@@ -261,4 +354,10 @@ def main(page: ft.Page):
     # 初期ルートを設定
     page.go('/')
 
-ft.app(target=main, port=3000)
+    # 初期状態でのボタン表示制御
+    toggle_auth_buttons()
+
+# python-dotenvのインストールが必要
+# pip install python-dotenv
+
+ft.app(target=main, port=2000, view=ft.WEB_BROWSER)
